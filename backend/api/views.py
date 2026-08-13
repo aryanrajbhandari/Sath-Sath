@@ -1,20 +1,29 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Campaign, Donation
 from .serializers import CampaignSerializer, DonationSerializer, RegisterSerializer
-
+from .permissions import IsCampaignOwnerOrReadOnly
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.all()
     serializer_class = CampaignSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsCampaignOwnerOrReadOnly
+    ]
 
     def perform_create(self, serializer):
-        serializer.save(cretor=self.request.user)
+        serializer.save(creator=self.request.user)
 
-class DonationViewSet(viewsets.ModelViewSet):
+class DonationViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class RegisterView(APIView):
     def post(self, request):
@@ -31,4 +40,4 @@ class RegisterView(APIView):
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
-        )
+        )   
