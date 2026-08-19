@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -24,6 +25,14 @@ class DonationViewSet(
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            donation = serializer.save()
+            
+            campaign = donation.campaign
+            campaign.raised_amount += donation.amount
+            campaign.save()
 
 class RegisterView(APIView):
     def post(self, request):
