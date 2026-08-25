@@ -4,6 +4,7 @@ from .models import Campaign, Donation, Profile
 
 class DonationSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
+    donor = serializers.CharField(read_only=True)
     campaign = serializers.PrimaryKeyRelatedField(
         queryset = Campaign.objects.all(),
         pk_field = serializers.CharField()
@@ -72,3 +73,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    phone = serializers.CharField(source='profile.phone', read_only=True)
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone']
+    def get_phone(self, obj):
+        if hasattr(obj, 'profile'):
+            return obj.profile.phone
+        return None
